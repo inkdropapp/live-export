@@ -1,13 +1,12 @@
-Inkdrop Live Export
-===================
+# Inkdrop Live Export
 
-An [Inkdrop](https://www.inkdrop.app/) module which allows you to programmatically export notes to local filesystem via [the local HTTP server](https://docs.inkdrop.app/manual/accessing-the-local-database#accessing-via-http-advanced).
+An [Inkdrop](https://www.inkdrop.app/) module which allows you to programmatically export notes to local filesystem via [the local HTTP server](https://developers.inkdrop.app/guides/integrate-with-external-programs).
 It supports live export, which continuously exports notes as the changes occur.
 
 ## Prerequisites
 
-* NodeJS >= 18
-* Inkdrop >= 5.5.1
+- NodeJS >= 18
+- Inkdrop >= 5.5.1
 
 ## Demo project
 
@@ -20,7 +19,7 @@ A simple blog:
 
 ### Enable the Inkdrop local server
 
-Follow [the instruction in the documentation](https://docs.inkdrop.app/manual/accessing-the-local-database#accessing-via-http-advanced).
+Follow [the instruction in the documentation](https://developers.inkdrop.app/guides/integrate-with-external-programs).
 
 Now you should be able to invoke the API like so:
 
@@ -88,9 +87,7 @@ const sub = await liveExport.start({
   },
   pathForFile: ({ mdastNode, /* note, file, */ extension, frontmatter }) => {
     if (frontmatter.slug && mdastNode.alt) {
-      const fn = `${frontmatter.slug}_${toKebabCase(
-        mdastNode.alt
-      )}${extension}`
+      const fn = `${frontmatter.slug}_${toKebabCase(mdastNode.alt)}${extension}`
       const res = {
         filePath: `./<PATH_TO_EXPORT_IMAGES>/${fn}`,
         url: `./<URL_TO_LINK_IMAGES>/${fn}`
@@ -122,7 +119,6 @@ And run it:
 node --experimental-vm-modules import.mjs
 ```
 
-
 ## `start()` parameters
 
 ### `bookId: string`
@@ -140,53 +136,53 @@ If false, it performs one-time export.
 
 Generate a path to export the specified note
 
-* `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note to export
-* `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
-* `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
-* Returns: `string | false | Promise<...>` - A destination path to export. If it returns false, the note will be skipped exporting.
+- `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note to export
+- `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
+- `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
+- Returns: `string | false | Promise<...>` - A destination path to export. If it returns false, the note will be skipped exporting.
 
 ### `urlForNote(data)`
 
 Generate a URL for the specified note.
 It is necessary to link from the note to another note.
 
-* `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note to export
-* `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
-* `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
-* Returns: `string | false | Promise<...>` - A url/relative path. If it returns false, the note will be skipped processing.
+- `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note to export
+- `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
+- `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
+- Returns: `string | false | Promise<...>` - A url/relative path. If it returns false, the note will be skipped processing.
 
 ### `pathForFile(data)`
 
 Generate a path and URL to export the specified image file.
 
-* `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note data
-* `data.mdastNode`: [`Image`](https://github.com/syntax-tree/mdast#image) - The mdast node of the image
-* `data.file`: [`File`](https://docs.inkdrop.app/reference/data-models#file) - The attached image file data to export
-* `data.extension`: `string` - The file extension of the image (e.g., '.jpg', '.png')
-* `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
-* `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
-* Returns: `{ filePath: string; url: string } | false | Promise<...>` - A destination file path to export and url to link. If it returns false, the image will be skipped exporting.
+- `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note data
+- `data.mdastNode`: [`Image`](https://github.com/syntax-tree/mdast#image) - The mdast node of the image
+- `data.file`: [`File`](https://docs.inkdrop.app/reference/data-models#file) - The attached image file data to export
+- `data.extension`: `string` - The file extension of the image (e.g., '.jpg', '.png')
+- `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
+- `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
+- Returns: `{ filePath: string; url: string } | false | Promise<...>` - A destination file path to export and url to link. If it returns false, the image will be skipped exporting.
 
 ### `preProcessNote(data)`
 
 Pre-process the specified note.
 It is useful to update the frontmatter information based on the note metadata.
 
-* `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note data
-* `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
-* `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
-* `data.mdast`: [`Root`](https://github.com/syntax-tree/mdast#root) - The mdast root node of the note
-* Returns: `any | Promise<any>`
+- `data.note`: [`Note`](https://docs.inkdrop.app/reference/data-models#note) - The note data
+- `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
+- `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
+- `data.mdast`: [`Root`](https://github.com/syntax-tree/mdast#root) - The mdast root node of the note
+- Returns: `any | Promise<any>`
 
 ### `postProcessNote(data)`
 
 Post-process the specified note right before writing the note to a file.
 It is useful to tweak the Markdown data (e.g., deleting unnecessary lines).
 
-* `data.md`: `string` - The Markdown data
-* `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
-* `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
-* Returns: `string | Promise<string>` - Returns the processed Markdown string
+- `data.md`: `string` - The Markdown data
+- `data.frontmatter`: `Record<string, any>` - The YAML frontmatter of the note
+- `data.tags`: An array of [`Tag`](https://docs.inkdrop.app/reference/data-models#tag) - The tags of the note
+- Returns: `string | Promise<string>` - Returns the processed Markdown string
 
 ## Debugging
 
