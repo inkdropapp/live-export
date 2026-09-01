@@ -1,13 +1,14 @@
-import debug from 'debug'
 import fs from 'fs'
-import { Note, File as IDFile, Tag } from 'inkdrop-model'
-import { unified } from 'unified'
-import remarkParse from 'remark-parse'
+
+import debug from 'debug'
+import { File as IDFile, Note, Tag } from 'inkdrop-model'
+import { dump as dumpYaml, load as loadYaml } from 'js-yaml'
+import type { Image as ImageNode, Link as LinkNode, Root, Yaml as YamlNode } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
+import remarkParse from 'remark-parse'
 import remarkStringify from 'remark-stringify'
+import { unified } from 'unified'
 import { visit } from 'unist-util-visit'
-import yaml from 'js-yaml'
-import { YAML, Image as ImageNode, Link as LinkNode, Root } from 'mdast'
 
 const logger = {
   debug: debug('inkdrop:export:debug'),
@@ -35,12 +36,7 @@ interface ExportParams {
     note: Note
     frontmatter: YAMLData
     tags: Tag[]
-  }) =>
-    | string
-    | undefined
-    | null
-    | false
-    | Promise<string | undefined | null | false>
+  }) => string | undefined | null | false | Promise<string | undefined | null | false>
   /**
    * Generate a URL for the specified note.
    * It is necessary to link from the note to another note.
@@ -49,12 +45,7 @@ interface ExportParams {
     note: Note
     frontmatter: YAMLData
     tags: Tag[]
-  }) =>
-    | string
-    | undefined
-    | null
-    | false
-    | Promise<string | undefined | null | false>
+  }) => string | undefined | null | false | Promise<string | undefined | null | false>
   /**
    * Generate a path and URL to export the specified image file
    */
@@ -122,13 +113,7 @@ export class LiveExporter {
       method: 'GET',
       headers
     }).then(response => response.json())
-    logger.debug(
-      'callApi:',
-      path,
-      query,
-      'response:',
-      JSON.stringify(response, null, 4)
-    )
+    logger.debug('callApi:', path, query, 'response:', JSON.stringify(response, null, 4))
 
     return response
   }
@@ -227,13 +212,23 @@ export class LiveExporter {
     }
   }
 
-  async parseNote(note: Note, params: ExportParams) {
+  async parseNote(
+    note: Note,
+    params: ExportParams
+  ): Promise<{
+    note: Note
+    tree: Root
+    yamlNode: YamlNode | undefined
+    yamlData: YAMLData
+    tags: Tag[]
+  }> {
     const md = note.body
     const tree = unified().use(remarkParse).use(remarkFrontmatter).parse(md)
-    const yamlNode = tree.children.find(child => child.type === 'yaml') as
-      | YAML
-      | undefined
-    const yamlData = (yaml.load(yamlNode?.value || '') as any) || {}
+    const yamlNode = tree.children.find((child): child is YamlNode => child.type === 'yaml')
+    // js-yaml >= 5 throws on empty input instead of returning undefined,
+    // so skip the parse entirely when the note has no frontmatter.
+    const yamlData: YAMLData =
+      (yamlNode?.value.trim() ? (loadYaml(yamlNode.value) as YAMLData) : null) || {}
     const tags = await this.getTagsWithIds(note.tags || [])
 
     if (params.preProcessNote) {
@@ -260,10 +255,7 @@ export class LiveExporter {
   async exportNote(note: Note, params: ExportParams) {
     logger.info('Exporting note:', note._id, note.title)
     let md = note.body
-    const { tree, yamlNode, yamlData, tags } = await this.parseNote(
-      note,
-      params
-    )
+    const { tree, yamlNode, yamlData, tags } = await this.parseNote(note, params)
 
     const fnNote = await params.pathForNote({
       note,
@@ -279,10 +271,7 @@ export class LiveExporter {
         el => {
           if (el.type === 'image' && el.url.startsWith('inkdrop://file:')) {
             nodes.push(el)
-          } else if (
-            el.type === 'link' &&
-            el.url.startsWith('inkdrop://note/')
-          ) {
+          } else if (el.type === 'link' && el.url.startsWith('inkdrop://note/')) {
             nodes.push(el)
           }
         },
@@ -315,12 +304,7 @@ export class LiveExporter {
               logger.debug('destF:', fnFile)
               const start = node.position?.start?.offset
               const end = node.position?.end?.offset
-              if (
-                fnFile &&
-                urlFile &&
-                typeof start === 'number' &&
-                typeof end === 'number'
-              ) {
+              if (fnFile && urlFile && typeof start === 'number' && typeof end === 'number') {
                 this.writeFile(fnFile, idFile)
                 const mdImage: ImageNode = {
                   ...node,
@@ -342,21 +326,13 @@ export class LiveExporter {
           /*
            * Process internal links
            */
-          const [, noteIdPre] =
-            node.url.match(/inkdrop:\/\/(note\/([^\/]*))/) || []
+          const [, noteIdPre] = node.url.match(/inkdrop:\/\/(note\/([^\/]*))/) || []
           if (noteIdPre && params.urlForNote) {
             const linkDestNoteId = noteIdPre.replace('/', ':')
-            const linkDestNote: Note | undefined = await this.getDoc(
-              linkDestNoteId
-            )
+            const linkDestNote: Note | undefined = await this.getDoc(linkDestNoteId)
             if (linkDestNote) {
               const { yamlData } = await this.parseNote(linkDestNote, params)
-              logger.debug(
-                'Found an internal link:',
-                node,
-                linkDestNoteId,
-                yamlData
-              )
+              logger.debug('Found an internal link:', node, linkDestNoteId, yamlData)
               const url = await params.urlForNote({
                 note: linkDestNote,
                 frontmatter: yamlData,
@@ -364,7 +340,7 @@ export class LiveExporter {
               })
               const start = node.position?.start?.offset
               const end = node.position?.end?.offset
-              if (url && start && end) {
+              if (url && typeof start === 'number' && typeof end === 'number') {
                 const mdLink: LinkNode = {
                   ...node,
                   url
@@ -385,7 +361,7 @@ export class LiveExporter {
         md =
           md.substring(0, yamlNode.position?.start.offset || 0) +
           `---\n` +
-          yaml.dump(yamlData) +
+          dumpYaml(yamlData) +
           `---` +
           md.substring(yamlNode.position?.end.offset || 0 + 1)
       }
@@ -437,9 +413,7 @@ export class LiveExporter {
     }
   }
 
-  async start(
-    params: ExportParams & { live: true }
-  ): Promise<{ stop: () => void }>
+  async start(params: ExportParams & { live: true }): Promise<{ stop: () => void }>
   async start(params: ExportParams & { live: undefined | false }): Promise<true>
   async start(params: ExportParams) {
     // const tags = await this.getTags()
@@ -459,9 +433,7 @@ export class LiveExporter {
 }
 
 export const kebabCaseToPascalCase = (string = '') => {
-  return string.replace(/(^\w|-\w)/g, replaceString =>
-    replaceString.replace(/-/, '').toUpperCase()
-  )
+  return string.replace(/(^\w|-\w)/g, replaceString => replaceString.replace(/-/, '').toUpperCase())
 }
 
 export const toKebabCase = (str: string) => {

@@ -5,7 +5,7 @@ It supports live export, which continuously exports notes as the changes occur.
 
 ## Prerequisites
 
-- NodeJS >= 18
+- NodeJS >= 22
 - Inkdrop >= 5.5.1
 
 ## Demo project
@@ -116,7 +116,7 @@ sub.stop()
 And run it:
 
 ```sh
-node --experimental-vm-modules import.mjs
+node import.mjs
 ```
 
 ## `start()` parameters

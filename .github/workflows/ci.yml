@@ -1,0 +1,47 @@
+name: Continuous Integration
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Covers every Node version the `engines` field claims to support.
+        node-version: [22.x, 24.x, 26.x]
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v7
+      - name: Setup pnpm 📦
+        uses: pnpm/action-setup@v6
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install 🔧
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint 🧐
+        run: pnpm lint
+
+      - name: Format check 🎨
+        run: pnpm exec oxfmt --check
+
+      - name: Typecheck 🔎
+        run: pnpm typecheck
+
+      - name: Test 🚨
+        run: pnpm test
+
+      - name: Build 🏗️
+        run: pnpm build
+
+      # `tsdown` exits 0 even when the emitted bundle cannot be loaded, so the
+      # built artifacts get imported and exercised before the job passes.
+      - name: Verify built artifacts 🔬
+        run: pnpm smoke

@@ -1,4 +1,8 @@
+.env
+node_modules
 lib
 *.db
 tmp
 t.js
+.DS_Store
+Session.vim

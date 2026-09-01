@@ -1,17 +1,20 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
+    "lib": ["es2024"],
+    "target": "es2024",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
     "stripInternal": true,
     "noUnusedLocals": false,
-    "strict": true,
-    "target": "es2020",
-    "module": "esnext",
     "newLine": "lf",
-    "moduleResolution": "node16",
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationDir": "./lib"
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": ["src/*.ts"]
+  "include": ["src/**/*.ts", "__tests__/**/*.ts", "tsdown.config.ts", "vitest.config.ts"],
+  "exclude": ["node_modules", "lib", "tmp"]
 }
