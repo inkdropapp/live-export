@@ -28,13 +28,9 @@ curl http://username:password@localhost:19840/
 # => {"version":"5.5.1","ok":true}
 ```
 
-### Install dev-tools plugin
+### How to copy a notebook ID
 
-It helps copy notebook IDs quickly from the context menu.
-
-https://my.inkdrop.app/plugins/dev-tools
-
-Then, copy a `bookId` of a notebook you'd like to export by right-clicking the notebook on the sidebar and select **Copy Notebook ID**.
+You can copy a `bookId` of a notebook you'd like to export by right-clicking the notebook on the sidebar and select **Copy Notebook ID**.
 
 ![Copy notebook ID](https://github.com/inkdropapp/inkdrop-dev-tools/raw/v0.1.0/docs/copy-notebook-id.png)
 
