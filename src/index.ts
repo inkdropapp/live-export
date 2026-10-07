@@ -386,11 +386,7 @@ export class LiveExporter {
       try {
         const { results, last_seq } = await this.getChanges(since)
         for (const change of results) {
-          if (
-            isNoteId(change.id) &&
-            change.doc.bookId === params.bookId &&
-            change.seq > since
-          ) {
+          if (isNoteId(change.id) && change.doc.bookId === params.bookId && change.seq > since) {
             const note = change.doc
             await this.exportNote(note, params)
           }
