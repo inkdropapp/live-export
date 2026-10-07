@@ -1,7 +1,7 @@
 import fs from 'fs'
 
 import debug from 'debug'
-import { File as IDFile, Note, Tag } from 'inkdrop-model'
+import { File as IDFile, Note, Tag, isNoteId } from 'inkdrop-model'
 import { dump as dumpYaml, load as loadYaml } from 'js-yaml'
 import type { Image as ImageNode, Link as LinkNode, Root, Yaml as YamlNode } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
@@ -387,7 +387,7 @@ export class LiveExporter {
         const { results, last_seq } = await this.getChanges(since)
         for (const change of results) {
           if (
-            change.id.startsWith('note:') &&
+            isNoteId(change.id) &&
             change.doc.bookId === params.bookId &&
             change.seq > since
           ) {
